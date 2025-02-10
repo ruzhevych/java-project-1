@@ -1,5 +1,8 @@
 package org.example;
 
+import org.example.entities.*;
+
+import java.math.BigDecimal;
 import java.sql.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
@@ -99,48 +102,75 @@ public class Main {
 
 
     public static void main(String[] args) {
-//        var con = connect();
-//        String sql = """
-//                CREATE TABLE IF NOT EXISTS games (
-//                    id SERIAL PRIMARY KEY,
-//                    title VARCHAR(100) NOT NULL,
-//                    developer VARCHAR(100) NOT NULL,
-//                    publisher VARCHAR(100) NOT NULL,
-//                    release_date DATE NOT NULL,
-//                    price DECIMAL(10, 2) NOT NULL CHECK (price >= 0)
-//                );
-//                """;
-//        try(var command = con.createStatement())
-//        {
-//            int rows = command.executeUpdate(sql);
-//            System.out.println("Таблицю створено. Оновлено записів: " + rows);
-//        } catch(SQLException ex) {
-//            System.out.println("Щось пішло не так "+ ex.getMessage());
-//        }
 
-        Connection con = connect();
-        if (con == null) return;
+        var session = HibernateUtil.getSession();
+        try {
+            session.beginTransaction();
 
-        try (Scanner scanner = new Scanner(System.in)) {
-            while (true) {
-                System.out.println("\n1. Add Game\n2. View Games\n3. Update Game\n4. Delete Game\n5. Exit");
-                System.out.print("Choose an option: ");
-                int choice = scanner.nextInt();
-                scanner.nextLine();
+            Genres genre = new Genres();
+            genre.setName("PvP");
+            session.persist(genre);
 
-                switch (choice) {
-                    case 1 -> createGame(con, scanner);
-                    case 2 -> readGames(con);
-                    case 3 -> updateGame(con, scanner);
-                    case 4 -> deleteGame(con, scanner);
-                    case 5 -> {
-                        System.out.println("Goodbye!");
-                        return;
-                    }
-                    default -> System.out.println("Invalid option. Try again.");
-                }
-            }
+            Users user = new Users();
+            user.setName("John Doe");
+            user.setEmail("john.doe@example.com");
+            user.setPassword("securepassword");
+            session.persist(user);
+
+            Game game = new Game();
+            game.setTitle("Battlefield 2042");
+            game.setPrice(new BigDecimal("59.99"));
+            game.setGenre(genre);
+            session.persist(game);
+
+            Orders order = new Orders();
+            order.setUser(user);
+            order.setTotalPrice(new BigDecimal("59.99"));
+            order.setStatus("pending");
+            session.persist(order);
+
+            Order_items order_item = new Order_items();
+            order_item.setOrder(order);
+            order_item.setGame(game);
+            order_item.setQuantity(1);
+            order_item.setPrice(new BigDecimal("59.99"));
+            session.persist(order_item);
+
+            Payment payment = new Payment();
+            payment.setOrder(order);
+            payment.setAmount(new BigDecimal("59.99"));
+            payment.setPaymentMethod("Credit Card");
+            payment.setStatus("completed");
+            session.persist(payment);
+
+            session.getTransaction().commit();
+        } catch(Exception ex) {
+            System.out.println("Щось пішло не так! " + ex.getMessage());
         }
+
+//        Connection con = connect();
+//        if (con == null) return;
+//
+//        try (Scanner scanner = new Scanner(System.in)) {
+//            while (true) {
+//                System.out.println("\n1. Add Game\n2. View Games\n3. Update Game\n4. Delete Game\n5. Exit");
+//                System.out.print("Choose an option: ");
+//                int choice = scanner.nextInt();
+//                scanner.nextLine();
+//
+//                switch (choice) {
+//                    case 1 -> createGame(con, scanner);
+//                    case 2 -> readGames(con);
+//                    case 3 -> updateGame(con, scanner);
+//                    case 4 -> deleteGame(con, scanner);
+//                    case 5 -> {
+//                        System.out.println("Goodbye!");
+//                        return;
+//                    }
+//                    default -> System.out.println("Invalid option. Try again.");
+//                }
+//            }
+//        }
 
 
     }
